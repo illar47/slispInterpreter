@@ -1,6 +1,0 @@
-/vagrant/build/CMakeFiles/rebuild_cache.dir
-/vagrant/build/CMakeFiles/edit_cache.dir
-/vagrant/build/CMakeFiles/test.dir
-/vagrant/build/CMakeFiles/slisp.dir
-/vagrant/build/CMakeFiles/coverage-grading.dir
-/vagrant/build/CMakeFiles/unittests.dir

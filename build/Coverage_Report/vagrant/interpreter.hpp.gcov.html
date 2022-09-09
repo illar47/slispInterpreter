@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - Coverage.combined.cleaned - /vagrant/interpreter.hpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">vagrant</a> - interpreter.hpp<span style="font-size: 80%;"> (source / <a href="interpreter.hpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">Coverage.combined.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-03-18 18:46:16</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #ifndef INTERPRETER_HPP</a>
+<span class="lineNum">       2 </span>            : #define INTERPRETER_HPP
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            : // system includes
+<span class="lineNum">       5 </span>            : #include &lt;string&gt;
+<span class="lineNum">       6 </span>            : #include &lt;istream&gt;
+<span class="lineNum">       7 </span>            : 
+<span class="lineNum">       8 </span>            : 
+<span class="lineNum">       9 </span>            : // module includes
+<span class="lineNum">      10 </span>            : #include &quot;expression.hpp&quot;
+<span class="lineNum">      11 </span>            : #include &quot;environment.hpp&quot;
+<span class="lineNum">      12 </span>            : 
+<span class="lineNum">      13 </span>            : // Interpreter has
+<span class="lineNum">      14 </span>            : // Environment, which starts at a default
+<a name="15"><span class="lineNum">      15 </span>            : // parse method, builds an internal AST</a>
+<span class="lineNum">      16 </span>            : // eval method, updates Environment, returns last result
+<span class="lineNum">      17 </span><span class="lineCov">        212 : class Interpreter {</span>
+<span class="lineNum">      18 </span>            : public:
+<span class="lineNum">      19 </span>            :         bool parse(std::istream&amp; expression) noexcept;
+<span class="lineNum">      20 </span>            :         Expression eval();
+<span class="lineNum">      21 </span>            :         Expression getAst(); 
+<span class="lineNum">      22 </span>            :         Expression appendToAst(Expression toAppend); 
+<span class="lineNum">      23 </span>            :         void clearAst(); 
+<span class="lineNum">      24 </span>            :         Expression setAst(Expression toSet); 
+<span class="lineNum">      25 </span>            : private:
+<span class="lineNum">      26 </span>            :         Environment env;
+<span class="lineNum">      27 </span>            :         Expression ast;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : };
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/slisp.dir/tokenize.cpp.o CMakeFiles/slisp.dir/expression.cpp.o CMakeFiles/slisp.dir/environment.cpp.o CMakeFiles/slisp.dir/interpreter.cpp.o CMakeFiles/slisp.dir/slisp.cpp.o  -o slisp 

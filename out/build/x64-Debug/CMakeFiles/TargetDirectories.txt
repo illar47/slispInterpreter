@@ -1,0 +1,5 @@
+C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug/CMakeFiles/slisp.dir
+C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug/CMakeFiles/unittests.dir
+C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug/CMakeFiles/test.dir
+C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,896 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - Coverage.combined.cleaned - /vagrant/interpreter.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">vagrant</a> - interpreter.cpp<span style="font-size: 80%;"> (source / <a href="interpreter.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">Coverage.combined.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">341</td>
+            <td class="headerCovTableEntry">368</td>
+            <td class="headerCovTableEntryHi">92.7 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-03-18 18:46:16</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;interpreter.hpp&quot;</a>
+<span class="lineNum">       2 </span>            : 
+<span class="lineNum">       3 </span>            : // system includes
+<span class="lineNum">       4 </span>            : #include &lt;stack&gt;
+<span class="lineNum">       5 </span>            : #include &lt;stdexcept&gt;
+<span class="lineNum">       6 </span>            : #include &lt;iostream&gt;
+<span class="lineNum">       7 </span>            : 
+<span class="lineNum">       8 </span>            : // module includes
+<span class="lineNum">       9 </span>            : #include &quot;tokenize.hpp&quot;
+<span class="lineNum">      10 </span>            : #include &quot;expression.hpp&quot;
+<span class="lineNum">      11 </span>            : #include &quot;environment.hpp&quot;
+<span class="lineNum">      12 </span>            : #include &quot;interpreter_semantic_error.hpp&quot;
+<span class="lineNum">      13 </span>            : 
+<span class="lineNum">      14 </span>            : //my includes 
+<span class="lineNum">      15 </span>            : #include &lt;map&gt;
+<span class="lineNum">      16 </span>            : #include &lt;math.h&gt;
+<span class="lineNum">      17 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span><span class="lineCov">          3 : std::map&lt;Symbol, Expression&gt; definitions;</span>
+<span class="lineNum">      20 </span>            : Expression evalRecursive(Expression&amp; curr); 
+<span class="lineNum">      21 </span>            : Expression computeSpecial(Expression toCompute); 
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : /**
+<a name="24"><span class="lineNum">      24 </span>            : * A helper function that checks if a string is one of the special form commands. </a>
+<span class="lineNum">      25 </span>            : */
+<span class="lineNum">      26 </span><span class="lineCov">        864 : bool isSpecialForm(std::string toCheck) {</span>
+<span class="lineNum">      27 </span><span class="lineCov">        864 :         return toCheck == &quot;begin&quot; || toCheck == &quot;if&quot; || toCheck == &quot;define&quot;; </span>
+<span class="lineNum">      28 </span>            : }
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : /**
+<a name="31"><span class="lineNum">      31 </span>            : * Helper function that determines if a string is a valid operator </a>
+<span class="lineNum">      32 </span>            : */
+<span class="lineNum">      33 </span><span class="lineCov">        513 : bool isOperator(std::string toCheck) {</span>
+<span class="lineNum">      34 </span><span class="lineCov">       1014 :         return toCheck == &quot;not&quot; || toCheck == &quot;and&quot; || toCheck == &quot;or&quot;</span>
+<span class="lineNum">      35 </span><span class="lineCov">        438 :                 || toCheck == &quot;&lt;&quot; || toCheck == &quot;&gt;=&quot; || toCheck == &quot;&gt;&quot; || toCheck == &quot;&lt;=&quot;</span>
+<span class="lineNum">      36 </span><span class="lineCov">        357 :                 || toCheck == &quot;=&quot; || toCheck == &quot;+&quot; || toCheck == &quot;-&quot;</span>
+<span class="lineNum">      37 </span><span class="lineCov">        741 :                 || toCheck == &quot;*&quot; || toCheck == &quot;/&quot; || toCheck == &quot;log10&quot; || toCheck == &quot;pow&quot;; </span>
+<span class="lineNum">      38 </span>            : }
+<span class="lineNum">      39 </span>            : 
+<span class="lineNum">      40 </span>            : /**
+<span class="lineNum">      41 </span>            : * Helper function that determines if operator is a binary operator
+<span class="lineNum">      42 </span>            : * 
+<a name="43"><span class="lineNum">      43 </span>            : * note - is both binary and unary depending on use</a>
+<span class="lineNum">      44 </span>            : */
+<span class="lineNum">      45 </span><span class="lineCov">        387 : bool isBinaryOperator(std::string toCheck) {</span>
+<span class="lineNum">      46 </span><span class="lineCov">        744 :         return toCheck == &quot;&lt;&quot; || toCheck == &quot;&gt;=&quot; || toCheck == &quot;&gt;&quot; || toCheck == &quot;&lt;=&quot;</span>
+<span class="lineNum">      47 </span><span class="lineCov">        297 :                 || toCheck == &quot;=&quot; || toCheck == &quot;-&quot;</span>
+<span class="lineNum">      48 </span><span class="lineCov">        654 :                 || toCheck == &quot;/&quot; ||  toCheck == &quot;pow&quot;;</span>
+<span class="lineNum">      49 </span>            : }
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : /**
+<span class="lineNum">      52 </span>            : * helper function that determines if operator is a unary operator
+<span class="lineNum">      53 </span>            : * 
+<span class="lineNum">      54 </span>            : * note - is both binary and unary depending on use 
+<a name="55"><span class="lineNum">      55 </span>            : * </a>
+<span class="lineNum">      56 </span>            : */
+<span class="lineNum">      57 </span><span class="lineCov">        213 : bool isUnaryOperator(std::string toCheck) {</span>
+<span class="lineNum">      58 </span><span class="lineCov">        213 :         return toCheck == &quot;not&quot;</span>
+<span class="lineNum">      59 </span><span class="lineCov">        207 :                 ||  toCheck == &quot;-&quot;</span>
+<span class="lineNum">      60 </span><span class="lineCov">        417 :             || toCheck == &quot;log10&quot;;</span>
+<span class="lineNum">      61 </span>            : }
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            : /** 
+<a name="64"><span class="lineNum">      64 </span>            : * Helper function for checking if something is an m-ary operator</a>
+<span class="lineNum">      65 </span>            : */
+<span class="lineNum">      66 </span><span class="lineCov">        114 : bool isMaryOperator(std::string toCheck) {</span>
+<span class="lineNum">      67 </span><span class="lineCov">        114 :         return toCheck == &quot;and&quot; || toCheck == &quot;or&quot; || toCheck == &quot;+&quot; || toCheck == &quot;*&quot;; </span>
+<span class="lineNum">      68 </span>            : }
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            : /**
+<span class="lineNum">      71 </span>            : * updates the AST by storing noted values (i.e. numOfVals starting from the back)
+<a name="72"><span class="lineNum">      72 </span>            : * into the tail of the provided head</a>
+<span class="lineNum">      73 </span>            : */
+<span class="lineNum">      74 </span><span class="lineCov">        330 : void updateExpressionAST(Expression &amp;head, std::vector&lt;Expression&gt; &amp;expressions, int &amp;numOfVals) {</span>
+<span class="lineNum">      75 </span>            :         //check that provided head is the back of expressions 
+<span class="lineNum">      76 </span>            :         
+<span class="lineNum">      77 </span><span class="lineCov">        330 :         expressions.pop_back(); </span>
+<span class="lineNum">      78 </span>            :         //sos send help XD
+<span class="lineNum">      79 </span><span class="lineCov">        330 :         if (expressions.size() &gt;= numOfVals - 1) {</span>
+<span class="lineNum">      80 </span><span class="lineCov">        660 :                 std::vector&lt;Expression&gt; newVect;</span>
+<span class="lineNum">      81 </span><span class="lineCov">       1062 :                 for (int i = 0; i &lt; numOfVals - 1 &amp;&amp; !expressions.empty(); i++) {</span>
+<span class="lineNum">      82 </span><span class="lineCov">        732 :                         newVect.push_back(expressions.back()); </span>
+<span class="lineNum">      83 </span><span class="lineCov">        732 :                         expressions.pop_back(); </span>
+<span class="lineNum">      84 </span>            :                 }
+<span class="lineNum">      85 </span><span class="lineCov">        330 :                 head.tail = newVect; </span>
+<span class="lineNum">      86 </span><span class="lineCov">        330 :                 newVect.clear(); </span>
+<span class="lineNum">      87 </span>            :                 //figure out how to deconstruct 
+<span class="lineNum">      88 </span>            :         }
+<span class="lineNum">      89 </span>            :         else {
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :                 head.tail = expressions;</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :                 expressions.clear();</span>
+<span class="lineNum">      92 </span>            :         }
+<span class="lineNum">      93 </span>            :         
+<span class="lineNum">      94 </span><span class="lineCov">        330 :         expressions.push_back(head); </span>
+<span class="lineNum">      95 </span>            :         //numOfVals = expressions.size(); 
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span><span class="lineCov">        330 : }</span>
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            : /**
+<span class="lineNum">     100 </span>            : * Itterates through a generated list of tokens to construct a tree of values
+<a name="101"><span class="lineNum">     101 </span>            : * to later evaluate. </a>
+<span class="lineNum">     102 </span>            : */
+<span class="lineNum">     103 </span><span class="lineCov">        324 : bool Interpreter::parse(std::istream &amp; expression) noexcept{</span>
+<span class="lineNum">     104 </span>            :   // return true if input is valid. otherwise, return false.
+<span class="lineNum">     105 </span>            : 
+<span class="lineNum">     106 </span>            :         //Expression newAst; //idk if needed 
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span><span class="lineCov">        648 :         std::vector&lt;Expression&gt; prevExpressions; //a place to store expressions. </span>
+<span class="lineNum">     109 </span><span class="lineCov">        324 :         definitions.clear(); </span>
+<span class="lineNum">     110 </span>            :         //tokenize expression 
+<span class="lineNum">     111 </span><span class="lineCov">        648 :         TokenSequenceType tokens = tokenize(expression); </span>
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span>            : 
+<span class="lineNum">     114 </span>            :         //check if valid type
+<span class="lineNum">     115 </span><span class="lineCov">        324 :         if (tokens.size() == 1) {</span>
+<span class="lineNum">     116 </span><span class="lineCov">          3 :                 Atom checkAtom; </span>
+<span class="lineNum">     117 </span><span class="lineCov">          3 :                 bool check = token_to_atom(tokens.front(), checkAtom); </span>
+<span class="lineNum">     118 </span><span class="lineCov">          6 :                 if (check &amp;&amp; </span>
+<span class="lineNum">     119 </span><span class="lineCov">          3 :                         (checkAtom.type == SymbolType || checkAtom.type == NoneType)) {</span>
+<span class="lineNum">     120 </span><span class="lineCov">          3 :                         return false; </span>
+<span class="lineNum">     121 </span>            :                 }
+<span class="lineNum">     122 </span>            :         }
+<span class="lineNum">     123 </span>            :         //check if tokens contains any values 
+<span class="lineNum">     124 </span><span class="lineCov">        321 :         else if (tokens.empty()) {</span>
+<span class="lineNum">     125 </span><span class="lineCov">          9 :                 return false;</span>
+<span class="lineNum">     126 </span>            :         }
+<span class="lineNum">     127 </span><span class="lineCov">        624 :         std::string currToken = tokens.back(); </span>
+<span class="lineNum">     128 </span><span class="lineCov">        312 :         int tokenSize = tokens.size(); </span>
+<span class="lineNum">     129 </span><span class="lineCov">        312 :         int openCount = 0; //count of the number of OPEN tokens currently found. </span>
+<span class="lineNum">     130 </span><span class="lineCov">        312 :         int numOfVals = 0; </span>
+<span class="lineNum">     131 </span>            :         
+<span class="lineNum">     132 </span>            :         //for each token, check if it's an atom. 
+<span class="lineNum">     133 </span><span class="lineCov">       2307 :         for (int i = 0; i &lt; tokenSize; i++) {</span>
+<span class="lineNum">     134 </span>            :                 //actions 
+<span class="lineNum">     135 </span><span class="lineCov">       4041 :                 Atom currAtom; //atom to hold valid token </span>
+<span class="lineNum">     136 </span>            : 
+<span class="lineNum">     137 </span><span class="lineCov">       2046 :                 bool isAtom = token_to_atom(currToken, currAtom); //attempt to transform token into an atom</span>
+<span class="lineNum">     138 </span>            : 
+<span class="lineNum">     139 </span>            :                 //check if atom was sucessfully made. 
+<span class="lineNum">     140 </span>            :                 /*if (!isAtom &amp;&amp; !isSpecialForm(currToken)
+<span class="lineNum">     141 </span>            :                         &amp;&amp; currToken != &quot;)&quot; &amp;&amp; currToken != &quot;(&quot;) {
+<span class="lineNum">     142 </span>            :                         return false; 
+<span class="lineNum">     143 </span>            :                 }*/
+<span class="lineNum">     144 </span>            : 
+<span class="lineNum">     145 </span>            :                 //if atom was made
+<span class="lineNum">     146 </span><span class="lineCov">       2046 :                 if (isAtom || currToken == &quot;)&quot; || currToken == &quot;(&quot;) {</span>
+<span class="lineNum">     147 </span>            :                         //check if is OPEN or CLOSE
+<span class="lineNum">     148 </span>            :                         //if OPEN: note that
+<span class="lineNum">     149 </span><span class="lineCov">       1914 :                         if (currToken == &quot;)&quot;) {</span>
+<span class="lineNum">     150 </span><span class="lineCov">        459 :                                 openCount++; </span>
+<span class="lineNum">     151 </span><span class="lineCov">        459 :                                 numOfVals = 0; </span>
+<span class="lineNum">     152 </span>            :                         }
+<span class="lineNum">     153 </span>            :                         //if CLOSE: check that marked as closed then check that most recent atom is an operator. store all previous expressions into that one's tail 
+<span class="lineNum">     154 </span><span class="lineCov">       1455 :                         else if (currToken == &quot;(&quot;) {</span>
+<span class="lineNum">     155 </span>            :                                 //invalid cases: no closing bracket recorded, no pre recorded expressions
+<span class="lineNum">     156 </span><span class="lineCov">        450 :                                 if (openCount &lt;= 0 || prevExpressions.empty()) {</span>
+<span class="lineNum">     157 </span><span class="lineCov">         57 :                                         return false; </span>
+<span class="lineNum">     158 </span>            :                                 }
+<span class="lineNum">     159 </span>            :                         
+<span class="lineNum">     160 </span><span class="lineCov">        843 :                                 Expression newHead; </span>
+<span class="lineNum">     161 </span>            :                                 //store operation in expression if valid 
+<span class="lineNum">     162 </span><span class="lineCov">        441 :                                 if (!prevExpressions.empty()) {</span>
+<span class="lineNum">     163 </span><span class="lineCov">        441 :                                          newHead = prevExpressions.back();</span>
+<span class="lineNum">     164 </span>            :                                 }
+<span class="lineNum">     165 </span>            :                                  
+<span class="lineNum">     166 </span>            :                                 //if operator: check that there are enough values either unary or binary depending on operation
+<span class="lineNum">     167 </span><span class="lineCov">        882 :                                 if (newHead.head.type == SymbolType </span>
+<span class="lineNum">     168 </span><span class="lineCov">        882 :                                         &amp;&amp; isOperator(newHead.head.value.sym_value)) {</span>
+<span class="lineNum">     169 </span>            :                                         //check rest of values in vector are NOT Operators
+<span class="lineNum">     170 </span><span class="lineCov">        243 :                                         if (prevExpressions.size() == 1) {</span>
+<span class="lineNum">     171 </span><span class="lineCov">          3 :                                                 return false; </span>
+<span class="lineNum">     172 </span>            :                                         }
+<span class="lineNum">     173 </span>            :                                         
+<span class="lineNum">     174 </span>            :                                         // - check: has only 1 -2 values aside from the head
+<span class="lineNum">     175 </span><span class="lineCov">        240 :                                         if (newHead.head.value.sym_value == &quot;-&quot; &amp;&amp; numOfVals &lt;= 3) {</span>
+<span class="lineNum">     176 </span>            :                                                 //store normally if only one or two operations
+<span class="lineNum">     177 </span><span class="lineCov">         27 :                                                 updateExpressionAST(newHead, prevExpressions, numOfVals); </span>
+<span class="lineNum">     178 </span>            :                                         }
+<span class="lineNum">     179 </span>            :                                         
+<span class="lineNum">     180 </span>            :                                         //unary operation check: only has 1 value aside from head
+<span class="lineNum">     181 </span><span class="lineCov">        213 :                                         else if (isUnaryOperator(newHead.head.value.sym_value) &amp;&amp; numOfVals &lt;= 2) {</span>
+<span class="lineNum">     182 </span><span class="lineCov">         18 :                                                 updateExpressionAST(newHead, prevExpressions, numOfVals);</span>
+<span class="lineNum">     183 </span>            :                                         }
+<span class="lineNum">     184 </span>            :                                         //binary operation check: has exactly 2 values aside from head
+<span class="lineNum">     185 </span><span class="lineCov">        195 :                                         else if (isBinaryOperator(newHead.head.value.sym_value) &amp;&amp; numOfVals == 3) {</span>
+<span class="lineNum">     186 </span><span class="lineCov">         81 :                                                 updateExpressionAST(newHead, prevExpressions, numOfVals); </span>
+<span class="lineNum">     187 </span>            :                                         }
+<span class="lineNum">     188 </span>            :                                         //m-ary check: has more than 1 values aside from head
+<span class="lineNum">     189 </span><span class="lineCov">        114 :                                         else if (isMaryOperator(newHead.head.value.sym_value) &amp;&amp; numOfVals &gt; 2){</span>
+<span class="lineNum">     190 </span><span class="lineCov">        102 :                                                 updateExpressionAST(newHead, prevExpressions, numOfVals); </span>
+<span class="lineNum">     191 </span>            :                                         }
+<span class="lineNum">     192 </span>            :                                         else {
+<span class="lineNum">     193 </span><span class="lineCov">         12 :                                                 return false; </span>
+<span class="lineNum">     194 </span>            :                                         }
+<span class="lineNum">     195 </span>            :                                         
+<span class="lineNum">     196 </span>            :                                         
+<span class="lineNum">     197 </span>            :                                 }
+<span class="lineNum">     198 </span>            :                                 
+<span class="lineNum">     199 </span>            :                                 //if not operator: check that there is only the one value and that it is not a symbol 
+<span class="lineNum">     200 </span><span class="lineCov">        396 :                                 else if (numOfVals == 1</span>
+<span class="lineNum">     201 </span><span class="lineCov">         78 :                                         &amp;&amp; prevExpressions.back().head.type != SymbolType</span>
+<span class="lineNum">     202 </span><span class="lineCov">        267 :                                         &amp;&amp; prevExpressions.back().head.type != NoneType) {</span>
+<span class="lineNum">     203 </span>            :                                 }
+<span class="lineNum">     204 </span><span class="lineCov">        264 :                                 else if (prevExpressions.back().head.type == SymbolType </span>
+<span class="lineNum">     205 </span><span class="lineCov">        132 :                                         &amp;&amp; numOfVals == 1 &amp;&amp; openCount &gt; 1 &amp;&amp; tokens.size() &gt; 1) {</span>
+<span class="lineNum">     206 </span>            : 
+<span class="lineNum">     207 </span>            :                                 }
+<span class="lineNum">     208 </span>            :                                 //check if it's special and update
+<span class="lineNum">     209 </span><span class="lineCov">        126 :                                 else if (isSpecialForm(prevExpressions.back().head.value.sym_value)) {</span>
+<span class="lineNum">     210 </span><span class="lineCov">        120 :                                         newHead = prevExpressions.back(); </span>
+<span class="lineNum">     211 </span><span class="lineCov">        120 :                                         if (prevExpressions.back().head.value.sym_value == &quot;define&quot;) {</span>
+<span class="lineNum">     212 </span><span class="lineCov">         63 :                                                 if (numOfVals &lt; 3) {</span>
+<span class="lineNum">     213 </span><span class="lineCov">          3 :                                                         return false; </span>
+<span class="lineNum">     214 </span>            :                                                 }
+<span class="lineNum">     215 </span><span class="lineCov">        120 :                                                 if (prevExpressions.at(prevExpressions.size() - 2).head.type == NoneType</span>
+<span class="lineNum">     216 </span><span class="lineCov">         60 :                                                         || prevExpressions.at(prevExpressions.size() - 2).head.type == NumberType) {</span>
+<span class="lineNum">     217 </span><span class="lineCov">          9 :                                                         return false; </span>
+<span class="lineNum">     218 </span>            :                                                 }
+<span class="lineNum">     219 </span><span class="lineCov">         51 :                                                 numOfVals = 3; </span>
+<span class="lineNum">     220 </span>            :                                         }
+<span class="lineNum">     221 </span><span class="lineCov">        108 :                                         if (prevExpressions.back().head.value.sym_value == &quot;begin&quot; &amp;&amp; i + 1 &lt; tokenSize) {</span>
+<span class="lineNum">     222 </span><span class="lineCov">          6 :                                                 return false; </span>
+<span class="lineNum">     223 </span>            :                                         }
+<span class="lineNum">     224 </span><span class="lineCov">        102 :                                         updateExpressionAST(newHead, prevExpressions, numOfVals); </span>
+<span class="lineNum">     225 </span>            :                                 }
+<span class="lineNum">     226 </span>            :                                 else {
+<span class="lineNum">     227 </span><span class="lineCov">          6 :                                         return false; </span>
+<span class="lineNum">     228 </span>            :                                 }
+<span class="lineNum">     229 </span>            : 
+<span class="lineNum">     230 </span>            :                                 //check if list of expressions is empty and that curr atom is empty
+<span class="lineNum">     231 </span>            : 
+<span class="lineNum">     232 </span><span class="lineCov">        402 :                                 openCount--; </span>
+<span class="lineNum">     233 </span><span class="lineCov">        402 :                                 numOfVals = 0;</span>
+<span class="lineNum">     234 </span><span class="lineCov">        402 :                                 if (openCount &gt; 0) {</span>
+<span class="lineNum">     235 </span><span class="lineCov">        156 :                                         numOfVals = prevExpressions.size(); </span>
+<span class="lineNum">     236 </span>            :                                 }
+<span class="lineNum">     237 </span>            :                                 
+<span class="lineNum">     238 </span>            : 
+<span class="lineNum">     239 </span>            :                                  
+<span class="lineNum">     240 </span>            :                         }
+<span class="lineNum">     241 </span>            : 
+<span class="lineNum">     242 </span>            : 
+<span class="lineNum">     243 </span>            :                         //if issue with OPEN or CLOSE values return false (i.e. CLOSE and no OPEN, or left OPEN)
+<span class="lineNum">     244 </span>            : 
+<span class="lineNum">     245 </span>            :                         //if not open or close, create an expression with empty tail.
+<span class="lineNum">     246 </span>            :                         else {
+<span class="lineNum">     247 </span>            :                                 //add check for when it's the only object in the list?
+<span class="lineNum">     248 </span>            : 
+<span class="lineNum">     249 </span>            :                                 //Expression newExpress = new Expression(currAtom); 
+<span class="lineNum">     250 </span><span class="lineCov">       1005 :                                 prevExpressions.push_back(Expression (currAtom)); </span>
+<span class="lineNum">     251 </span><span class="lineCov">       1005 :                                 numOfVals++; </span>
+<span class="lineNum">     252 </span>            :                         }
+<span class="lineNum">     253 </span>            :                 }
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span>            :                 //if token is a special form
+<span class="lineNum">     256 </span>            :                 else {
+<span class="lineNum">     257 </span>            :                         //if special-form = &quot;begin&quot; - case where previous token was begin and now new stuffs? 
+<span class="lineNum">     258 </span><span class="lineCov">        132 :                         if (isSpecialForm(currToken)) {</span>
+<span class="lineNum">     259 </span><span class="lineCov">        129 :                                 prevExpressions.push_back(Expression(currToken)); </span>
+<span class="lineNum">     260 </span><span class="lineCov">        129 :                                 prevExpressions.back().head.type = NoneType;</span>
+<span class="lineNum">     261 </span><span class="lineCov">        129 :                                 numOfVals++; </span>
+<span class="lineNum">     262 </span>            :                         }
+<span class="lineNum">     263 </span>            :                         //just in case~
+<span class="lineNum">     264 </span>            :                         else {
+<span class="lineNum">     265 </span><span class="lineCov">          3 :                                 return false; </span>
+<span class="lineNum">     266 </span>            :                         }
+<span class="lineNum">     267 </span>            :                 }
+<span class="lineNum">     268 </span>            :                 //increment currToken
+<span class="lineNum">     269 </span><span class="lineCov">       1995 :                 tokens.pop_back(); </span>
+<span class="lineNum">     270 </span><span class="lineCov">       1995 :                 if (!tokens.empty()) {</span>
+<span class="lineNum">     271 </span><span class="lineCov">       1734 :                         currToken = tokens.back();</span>
+<span class="lineNum">     272 </span>            :                 }
+<span class="lineNum">     273 </span>            :                 
+<span class="lineNum">     274 </span>            :         }
+<span class="lineNum">     275 </span>            :         //if not properly closed
+<span class="lineNum">     276 </span><span class="lineCov">        261 :         if ((openCount &gt; 0)</span>
+<span class="lineNum">     277 </span><span class="lineCov">        519 :                 || (!isOperator(prevExpressions.back().head.value.sym_value)</span>
+<span class="lineNum">     278 </span><span class="lineCov">        348 :                         &amp;&amp; !isSpecialForm(prevExpressions.back().head.value.sym_value) &amp;&amp; prevExpressions.size() &gt; 1)</span>
+<span class="lineNum">     279 </span><span class="lineCov">        519 :                 || (prevExpressions.size() != 1)) {</span>
+<span class="lineNum">     280 </span><span class="lineCov">         21 :                 return false; </span>
+<span class="lineNum">     281 </span>            :         }
+<span class="lineNum">     282 </span>            : 
+<span class="lineNum">     283 </span>            :         /*//check if last value i.e. top of tree is an operator or special symbol 
+<span class="lineNum">     284 </span>            :         //TODO modify for final version later - check the head of newAst instead!
+<span class="lineNum">     285 </span>            :         else if (!isOperator(prevExpressions.back().head.value.sym_value)
+<span class="lineNum">     286 </span>            :                 &amp;&amp; !isSpecialForm(prevExpressions.back().head.value.sym_value) &amp;&amp; prevExpressions.size() &gt; 1) {
+<span class="lineNum">     287 </span>            :                 return false; 
+<span class="lineNum">     288 </span>            :         }
+<span class="lineNum">     289 </span>            :         //add check for complete pairs of OPEN and CLOSE
+<span class="lineNum">     290 </span>            :         // add check for stored expressions being updated (in case there were no OPEN CLOSE PAIRS)
+<span class="lineNum">     291 </span>            :         //update the internal ast
+<span class="lineNum">     292 </span>            :         else if (prevExpressions.size() != 1) {
+<span class="lineNum">     293 </span>            :                 return false; 
+<span class="lineNum">     294 </span>            :         }*/
+<span class="lineNum">     295 </span><span class="lineCov">        240 :         this-&gt;ast = prevExpressions.front(); </span>
+<span class="lineNum">     296 </span>            : 
+<span class="lineNum">     297 </span>            : 
+<span class="lineNum">     298 </span><span class="lineCov">        240 :     return true;</span>
+<span class="lineNum">     299 </span>            : };
+<span class="lineNum">     300 </span>            : 
+<span class="lineNum">     301 </span>            : /**
+<span class="lineNum">     302 </span>            : * Realized that I am dumb and that I don't need to have two separate 
+<a name="303"><span class="lineNum">     303 </span>            : * getVal functions. Hopefully this one works T-T</a>
+<span class="lineNum">     304 </span>            : */
+<span class="lineNum">     305 </span><span class="lineCov">         15 : Expression getVal(Expression&amp; toFind) {</span>
+<span class="lineNum">     306 </span>            : 
+<span class="lineNum">     307 </span><span class="lineCov">         30 :         std::string label = toFind.head.value.sym_value;</span>
+<span class="lineNum">     308 </span>            :         //search it and find it's pair 
+<span class="lineNum">     309 </span><span class="lineCov">         15 :         if (definitions.find(label) == definitions.end()) {</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :                 std::cout &lt;&lt; &quot;Error: unknown symbol&quot; &lt;&lt; std::endl;</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :                 throw InterpreterSemanticError(&quot;undefined value&quot;);</span>
+<span class="lineNum">     312 </span>            :         }
+<span class="lineNum">     313 </span><span class="lineCov">         30 :     return definitions.at(label); </span>
+<span class="lineNum">     314 </span>            :         
+<span class="lineNum">     315 </span>            : }
+<span class="lineNum">     316 </span>            : /**
+<span class="lineNum">     317 </span>            : * helper function that determiens the numeric equivalent
+<a name="318"><span class="lineNum">     318 </span>            : * (if it has been logged) of a provided SymbolType value</a>
+<span class="lineNum">     319 </span>            : */
+<span class="lineNum">     320 </span><span class="lineCov">         30 : Number getNumVal(Expression&amp; toFind) {</span>
+<span class="lineNum">     321 </span>            :         //have a lib of pairs with letter and num vals 
+<span class="lineNum">     322 </span><span class="lineCov">         60 :         std::string label = toFind.head.value.sym_value; </span>
+<span class="lineNum">     323 </span>            :         //search it and find it's pair 
+<span class="lineNum">     324 </span><span class="lineCov">         30 :         if (definitions.find(label)== definitions.end()) {</span>
+<span class="lineNum">     325 </span><span class="lineCov">         12 :                 std::cout &lt;&lt; &quot;Error: unknown symbol&quot; &lt;&lt; std::endl; </span>
+<span class="lineNum">     326 </span><span class="lineCov">         12 :                 throw InterpreterSemanticError(&quot;undefined value&quot;); </span>
+<span class="lineNum">     327 </span>            :         }
+<span class="lineNum">     328 </span><span class="lineCov">         18 :         Number value = definitions.at(label).head.value.num_value; </span>
+<span class="lineNum">     329 </span><span class="lineCov">         18 :         toFind.head.value.num_value = value; </span>
+<span class="lineNum">     330 </span>            :         //store in num section
+<span class="lineNum">     331 </span><span class="lineCov">         36 :         return value;</span>
+<span class="lineNum">     332 </span>            : 
+<span class="lineNum">     333 </span>            : }
+<span class="lineNum">     334 </span>            : 
+<span class="lineNum">     335 </span>            : /**
+<span class="lineNum">     336 </span>            : * helper function that determines the boolean equivalent
+<a name="337"><span class="lineNum">     337 </span>            : * (if it has been logged) of a provided symbolType value</a>
+<span class="lineNum">     338 </span>            : */
+<span class="lineNum">     339 </span><span class="lineCov">          6 : Boolean getBoolVal(Expression&amp; toFind) {</span>
+<span class="lineNum">     340 </span><span class="lineCov">         12 :         std::string label = toFind.head.value.sym_value; </span>
+<span class="lineNum">     341 </span><span class="lineCov">          6 :         if (definitions.find(label) == definitions.end()) {</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :                 std::cout &lt;&lt; &quot;Error: unknown symbol&quot; &lt;&lt; std::endl;</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :                 throw InterpreterSemanticError(&quot;undefined value&quot;);</span>
+<span class="lineNum">     344 </span>            :         }
+<span class="lineNum">     345 </span><span class="lineCov">          6 :         if (definitions.at(label).head.type != BooleanType) {</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :                 std::cout &lt;&lt; &quot;Error: invalid request&quot; &lt;&lt; std::endl;</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :                 throw InterpreterSemanticError(&quot;invalid search&quot;);</span>
+<span class="lineNum">     348 </span>            :                 
+<span class="lineNum">     349 </span>            :         }
+<span class="lineNum">     350 </span>            : 
+<span class="lineNum">     351 </span><span class="lineCov">         12 :         return (definitions.at(label).head.value.bool_value);</span>
+<span class="lineNum">     352 </span>            : 
+<span class="lineNum">     353 </span>            :          
+<span class="lineNum">     354 </span>            : 
+<span class="lineNum">     355 </span>            : }
+<span class="lineNum">     356 </span>            :  /**
+<a name="357"><span class="lineNum">     357 </span>            :  * Helper function for computing special operations </a>
+<span class="lineNum">     358 </span>            :  */
+<span class="lineNum">     359 </span><span class="lineCov">         78 :  Expression computeSpecial(Expression toCompute){</span>
+<span class="lineNum">     360 </span><span class="lineCov">         78 :          Expression result; </span>
+<span class="lineNum">     361 </span>            :          //begin operation: evaluate each expression in order to the last
+<span class="lineNum">     362 </span><span class="lineCov">         78 :          if (toCompute.head.value.sym_value == &quot;begin&quot;) {</span>
+<span class="lineNum">     363 </span>            :                  //should be fine
+<span class="lineNum">     364 </span><span class="lineCov">        108 :                  for (int i = 0; i &lt; toCompute.tail.size(); i++) {</span>
+<span class="lineNum">     365 </span><span class="lineCov">         87 :                          toCompute.tail.at(i) = evalRecursive(toCompute.tail.at(i)); </span>
+<span class="lineNum">     366 </span>            :                          
+<span class="lineNum">     367 </span>            :                  }
+<span class="lineNum">     368 </span><span class="lineCov">         21 :                  result = toCompute.tail.at(toCompute.tail.size() - 1); </span>
+<span class="lineNum">     369 </span>            :                  //throw error if theres more above it? 
+<span class="lineNum">     370 </span>            :          }
+<span class="lineNum">     371 </span>            :          //if operation: eval result of exp 2 if exp 1 eval to true, also eval 3
+<span class="lineNum">     372 </span><span class="lineCov">         57 :          else if (toCompute.head.value.sym_value == &quot;if&quot;) {</span>
+<span class="lineNum">     373 </span>            :                  //error if exp 1 isn't a bool 
+<span class="lineNum">     374 </span><span class="lineCov">         36 :                  Expression toCheck = evalRecursive(toCompute.tail.at(0)); </span>
+<span class="lineNum">     375 </span><span class="lineCov">         18 :                  if (toCheck.head.type != BooleanType) {</span>
+<span class="lineNum">     376 </span>            :                          //throw error 
+<span class="lineNum">     377 </span><span class="lineCov">          3 :                          std::cout &lt;&lt; &quot;Error: user input invalid compare type&quot;; </span>
+<span class="lineNum">     378 </span><span class="lineCov">          3 :                          throw InterpreterSemanticError(&quot;invalid parameter for if&quot;); </span>
+<span class="lineNum">     379 </span>            :                  }
+<span class="lineNum">     380 </span>            : 
+<span class="lineNum">     381 </span>            :                  //if exp 1 is true eval exp 2
+<span class="lineNum">     382 </span><span class="lineCov">         15 :                  if (toCheck.head.value.bool_value) {</span>
+<span class="lineNum">     383 </span><span class="lineCov">         12 :                          result = evalRecursive(toCompute.tail.at(1)); </span>
+<span class="lineNum">     384 </span>            :                          //undo hardcode later
+<span class="lineNum">     385 </span><span class="lineCov">         12 :                          result.head.type = NumberType; </span>
+<span class="lineNum">     386 </span>            :                  }
+<span class="lineNum">     387 </span>            :                  //else eval exp 3
+<span class="lineNum">     388 </span>            :                  else {
+<span class="lineNum">     389 </span><span class="lineCov">          3 :                          result = evalRecursive(toCompute.tail.at(2)); </span>
+<span class="lineNum">     390 </span><span class="lineCov">          3 :                          result.head.type = NumberType;</span>
+<span class="lineNum">     391 </span>            :                  }
+<span class="lineNum">     392 </span>            :          }
+<span class="lineNum">     393 </span>            :          //define operation 
+<span class="lineNum">     394 </span><span class="lineCov">         39 :          else if (toCompute.head.value.sym_value == &quot;define&quot;) {</span>
+<span class="lineNum">     395 </span>            :                 
+<span class="lineNum">     396 </span>            :                  
+<span class="lineNum">     397 </span>            :                  
+<span class="lineNum">     398 </span>            :                  //it's an error to re-define a symbol 
+<span class="lineNum">     399 </span><span class="lineCov">         78 :                  Symbol label = toCompute.tail.front().head.value.sym_value;</span>
+<span class="lineNum">     400 </span><span class="lineCov">         78 :                  Expression value = evalRecursive(toCompute.tail.back());</span>
+<span class="lineNum">     401 </span>            : 
+<span class="lineNum">     402 </span>            :                  //check if theres a symbol as a defintion and find it's value
+<span class="lineNum">     403 </span><span class="lineCov">         39 :                  if (value.head.type == SymbolType &amp;&amp; definitions.find(value.head.value.sym_value) != definitions.end()) {</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :                          value = definitions.at(value.head.value.sym_value); </span>
+<span class="lineNum">     405 </span>            :                  }
+<span class="lineNum">     406 </span><span class="lineCov">         39 :                  toCompute.tail.back() = value; </span>
+<span class="lineNum">     407 </span><span class="lineCov">         39 :                  definitions.insert(std::pair&lt;Symbol, Expression&gt;(label,value));</span>
+<span class="lineNum">     408 </span><span class="lineCov">         39 :                  result = value; </span>
+<span class="lineNum">     409 </span>            :          }
+<span class="lineNum">     410 </span><span class="lineCov">         75 :          return result; </span>
+<a name="411"><span class="lineNum">     411 </span>            :  }</a>
+<span class="lineNum">     412 </span>            : 
+<span class="lineNum">     413 </span><span class="lineCov">         96 :  Expression binaryOp(std::string op, Expression &amp;toCompute, Expression curr) {</span>
+<span class="lineNum">     414 </span><span class="lineCov">         96 :          Expression toReturn; </span>
+<span class="lineNum">     415 </span>            :          // &lt; operation 
+<span class="lineNum">     416 </span><span class="lineCov">         96 :          if (op == &quot;&lt;&quot;) {</span>
+<span class="lineNum">     417 </span><span class="lineCov">         30 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     418 </span><span class="lineCov">         30 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     419 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     420 </span><span class="lineCov">         15 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     421 </span><span class="lineCov">          6 :                          getNumVal(val1);</span>
+<span class="lineNum">     422 </span>            :                  }
+<span class="lineNum">     423 </span><span class="lineCov">         15 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     424 </span><span class="lineCov">          6 :                          getNumVal(val2);</span>
+<span class="lineNum">     425 </span>            :                  }
+<span class="lineNum">     426 </span>            :                  //preform operation
+<span class="lineNum">     427 </span><span class="lineCov">         15 :                  toReturn.head.type = BooleanType;</span>
+<span class="lineNum">     428 </span><span class="lineCov">         30 :                  toReturn.head.value.bool_value = val1.head.value.num_value</span>
+<span class="lineNum">     429 </span><span class="lineCov">         15 :                          &lt; val2.head.value.num_value;</span>
+<span class="lineNum">     430 </span>            :          }
+<span class="lineNum">     431 </span>            :          //&gt;= operation 
+<span class="lineNum">     432 </span><span class="lineCov">         81 :          else if (op == &quot;&gt;=&quot;) {</span>
+<span class="lineNum">     433 </span><span class="lineCov">         24 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     434 </span><span class="lineCov">         24 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     435 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     436 </span><span class="lineCov">         12 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 :                          getNumVal(val1);</span>
+<span class="lineNum">     438 </span>            :                  }
+<span class="lineNum">     439 </span><span class="lineCov">         12 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :                          getNumVal(val2);</span>
+<span class="lineNum">     441 </span>            :                  }
+<span class="lineNum">     442 </span>            :                  //preform operation
+<span class="lineNum">     443 </span>            : 
+<span class="lineNum">     444 </span><span class="lineCov">         12 :                  toReturn.head.type = BooleanType;</span>
+<span class="lineNum">     445 </span><span class="lineCov">         24 :                  toReturn.head.value.bool_value = val1.head.value.num_value</span>
+<span class="lineNum">     446 </span><span class="lineCov">         12 :                          &gt;= val2.head.value.num_value;</span>
+<span class="lineNum">     447 </span>            :          }
+<span class="lineNum">     448 </span>            :          //&gt; operation 
+<span class="lineNum">     449 </span><span class="lineCov">         69 :          else if (op == &quot;&gt;&quot;) {</span>
+<span class="lineNum">     450 </span><span class="lineCov">         12 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     451 </span><span class="lineCov">         12 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     452 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     453 </span><span class="lineCov">          6 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :                          getNumVal(val1);</span>
+<span class="lineNum">     455 </span>            :                  }
+<span class="lineNum">     456 </span><span class="lineCov">          6 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :                          getNumVal(val2);</span>
+<span class="lineNum">     458 </span>            :                  }
+<span class="lineNum">     459 </span>            :                  //preform operation
+<span class="lineNum">     460 </span><span class="lineCov">          6 :                  toReturn.head.type = BooleanType;</span>
+<span class="lineNum">     461 </span><span class="lineCov">         12 :                  toReturn.head.value.bool_value = val1.head.value.num_value</span>
+<span class="lineNum">     462 </span><span class="lineCov">          6 :                          &gt; val2.head.value.num_value;</span>
+<span class="lineNum">     463 </span>            :          }
+<span class="lineNum">     464 </span>            :          //&lt;= operation 
+<span class="lineNum">     465 </span><span class="lineCov">         63 :          else if (op == &quot;&lt;=&quot;) {</span>
+<span class="lineNum">     466 </span><span class="lineCov">         24 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     467 </span><span class="lineCov">         24 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     468 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     469 </span><span class="lineCov">         12 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :                          getNumVal(val1);</span>
+<span class="lineNum">     471 </span>            :                  }
+<span class="lineNum">     472 </span><span class="lineCov">         12 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :                          getNumVal(val2);</span>
+<span class="lineNum">     474 </span>            :                  }
+<span class="lineNum">     475 </span>            :                  //preform operation
+<span class="lineNum">     476 </span><span class="lineCov">         12 :                  toReturn.head.type = BooleanType;</span>
+<span class="lineNum">     477 </span><span class="lineCov">         24 :                  toReturn.head.value.bool_value = val1.head.value.num_value</span>
+<span class="lineNum">     478 </span><span class="lineCov">         12 :                          &lt;= val2.head.value.num_value;</span>
+<span class="lineNum">     479 </span>            :          }
+<span class="lineNum">     480 </span>            :          //= operation 
+<span class="lineNum">     481 </span><span class="lineCov">         51 :          else if (op == &quot;=&quot;) {</span>
+<span class="lineNum">     482 </span><span class="lineCov">         12 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     483 </span><span class="lineCov">         12 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     484 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     485 </span><span class="lineCov">          6 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :                          getNumVal(val1);</span>
+<span class="lineNum">     487 </span>            :                  }
+<span class="lineNum">     488 </span><span class="lineCov">          6 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :                          getNumVal(val2);</span>
+<span class="lineNum">     490 </span>            :                  }
+<span class="lineNum">     491 </span>            :                  //preform operation
+<span class="lineNum">     492 </span><span class="lineCov">          6 :                  toReturn.head.type = BooleanType;</span>
+<span class="lineNum">     493 </span><span class="lineCov">         12 :                  toReturn.head.value.bool_value = val1.head.value.num_value</span>
+<span class="lineNum">     494 </span><span class="lineCov">          6 :                          == val2.head.value.num_value;</span>
+<span class="lineNum">     495 </span>            :          }
+<span class="lineNum">     496 </span>            :          //- operation 
+<span class="lineNum">     497 </span><span class="lineCov">         45 :          else if (op == &quot;-&quot;) {</span>
+<span class="lineNum">     498 </span><span class="lineCov">         15 :                  if (toCompute.tail.size() == 1) {</span>
+<span class="lineNum">     499 </span><span class="lineCov">         12 :                          Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     500 </span><span class="lineCov">          6 :                          toReturn.head.type = NumberType;</span>
+<span class="lineNum">     501 </span><span class="lineCov">          6 :                          toReturn.head.value.num_value = (val1.head.value.num_value) * -1;</span>
+<span class="lineNum">     502 </span>            :                  }
+<span class="lineNum">     503 </span>            :                  else {
+<span class="lineNum">     504 </span><span class="lineCov">         18 :                          Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     505 </span><span class="lineCov">         18 :                          Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     506 </span>            :                          //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     507 </span><span class="lineCov">          9 :                          if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :                                  getNumVal(val1);</span>
+<span class="lineNum">     509 </span>            :                          }
+<span class="lineNum">     510 </span><span class="lineCov">          9 :                          if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :                                  getNumVal(val2);</span>
+<span class="lineNum">     512 </span>            :                          }
+<span class="lineNum">     513 </span>            :                          //preform operation
+<span class="lineNum">     514 </span><span class="lineCov">          9 :                          toReturn.head.type = NumberType;</span>
+<span class="lineNum">     515 </span><span class="lineCov">         18 :                          toReturn.head.value.num_value = val1.head.value.num_value</span>
+<span class="lineNum">     516 </span><span class="lineCov">          9 :                                  - val2.head.value.num_value;</span>
+<span class="lineNum">     517 </span>            :                  }
+<span class="lineNum">     518 </span>            :          }
+<span class="lineNum">     519 </span>            :          // / operation 
+<span class="lineNum">     520 </span><span class="lineCov">         30 :          else if (op == &quot;/&quot;) {</span>
+<span class="lineNum">     521 </span><span class="lineCov">         24 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     522 </span><span class="lineCov">         24 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     523 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     524 </span><span class="lineCov">         12 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :                          getNumVal(val1);</span>
+<span class="lineNum">     526 </span>            :                  }
+<span class="lineNum">     527 </span><span class="lineCov">         12 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :                          getNumVal(val2);</span>
+<span class="lineNum">     529 </span>            :                  }
+<span class="lineNum">     530 </span>            :                  //preform operation
+<span class="lineNum">     531 </span><span class="lineCov">         12 :                  toReturn.head.type = NumberType;</span>
+<span class="lineNum">     532 </span><span class="lineCov">         24 :                  toReturn.head.value.num_value = val1.head.value.num_value</span>
+<span class="lineNum">     533 </span><span class="lineCov">         12 :                          / val2.head.value.num_value;</span>
+<span class="lineNum">     534 </span>            :          }
+<span class="lineNum">     535 </span>            :          //pow operation 
+<span class="lineNum">     536 </span><span class="lineCov">         18 :          else if (op == &quot;pow&quot;) {</span>
+<span class="lineNum">     537 </span><span class="lineCov">         36 :                  Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     538 </span><span class="lineCov">         36 :                  Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     539 </span>            :                  //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     540 </span><span class="lineCov">         18 :                  if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     541 </span><span class="lineCov">          6 :                          getNumVal(val1);</span>
+<span class="lineNum">     542 </span>            :                  }
+<span class="lineNum">     543 </span><span class="lineCov">         12 :                  if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     544 </span><span class="lineCov">          3 :                          getNumVal(val2);</span>
+<span class="lineNum">     545 </span>            :                  }
+<span class="lineNum">     546 </span>            :                  //preform operation
+<span class="lineNum">     547 </span><span class="lineCov">          9 :                  toReturn.head.type = NumberType;</span>
+<span class="lineNum">     548 </span><span class="lineCov">          9 :                  toReturn.head.value.num_value = std::pow(val1.head.value.num_value</span>
+<span class="lineNum">     549 </span>            :                          , val2.head.value.num_value);
+<span class="lineNum">     550 </span>            :          }
+<span class="lineNum">     551 </span><span class="lineCov">         87 :          return toReturn; </span>
+<span class="lineNum">     552 </span>            :  }
+<span class="lineNum">     553 </span>            : 
+<span class="lineNum">     554 </span>            :  /**
+<span class="lineNum">     555 </span>            :  * helper function for making computations 
+<span class="lineNum">     556 </span>            :  * 
+<a name="557"><span class="lineNum">     557 </span>            :  * TODO - break into smaller pieces later for readability</a>
+<span class="lineNum">     558 </span>            :  */
+<span class="lineNum">     559 </span><span class="lineCov">        192 : Expression compute(Expression &amp;toCompute) {</span>
+<span class="lineNum">     560 </span><span class="lineCov">        384 :         Expression toReturn; </span>
+<span class="lineNum">     561 </span><span class="lineCov">        384 :         Expression curr; </span>
+<span class="lineNum">     562 </span><span class="lineCov">        384 :         std::string op = toCompute.head.value.sym_value; </span>
+<span class="lineNum">     563 </span>            :         //is operator 
+<span class="lineNum">     564 </span><span class="lineCov">        192 :         if (!isSpecialForm(op)) {</span>
+<span class="lineNum">     565 </span><span class="lineCov">        192 :                 if (isBinaryOperator(op)) {</span>
+<span class="lineNum">     566 </span><span class="lineCov">        192 :                         Expression calculation = binaryOp(op, toCompute, curr); </span>
+<span class="lineNum">     567 </span>            : 
+<span class="lineNum">     568 </span><span class="lineCov">         87 :                         toReturn.head.type = calculation.head.type; </span>
+<span class="lineNum">     569 </span><span class="lineCov">         87 :                         if (calculation.head.type == NumberType) {</span>
+<span class="lineNum">     570 </span><span class="lineCov">         36 :                                 toReturn.head.value.num_value = calculation.head.value.num_value;</span>
+<span class="lineNum">     571 </span>            :                         }
+<span class="lineNum">     572 </span><span class="lineCov">         51 :                         else if (calculation.head.type == BooleanType) {</span>
+<span class="lineNum">     573 </span><span class="lineCov">         51 :                                 toReturn.head.value.bool_value = calculation.head.value.bool_value;</span>
+<span class="lineNum">     574 </span>            :                         }
+<span class="lineNum">     575 </span>            :                         else {
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :                                 toReturn.head.value.sym_value = calculation.head.value.sym_value;</span>
+<span class="lineNum">     577 </span>            :                         }
+<span class="lineNum">     578 </span>            :                         
+<span class="lineNum">     579 </span>            :                 }
+<span class="lineNum">     580 </span>            :                 //not operation 
+<span class="lineNum">     581 </span><span class="lineCov">        183 :                 if (op == &quot;not&quot;) {</span>
+<span class="lineNum">     582 </span>            :                         //assuming a bool has been paired with it 
+<span class="lineNum">     583 </span><span class="lineCov">          6 :                         curr = toCompute.tail.back(); </span>
+<span class="lineNum">     584 </span><span class="lineCov">          6 :                         toReturn.head.type = BooleanType; </span>
+<span class="lineNum">     585 </span><span class="lineCov">          6 :                         toReturn.head.value.bool_value = !(curr.head.value.bool_value); </span>
+<span class="lineNum">     586 </span>            :                 }
+<span class="lineNum">     587 </span>            :                 //and operation : use this setup on other operations 
+<span class="lineNum">     588 </span><span class="lineCov">        177 :                 else if (op == &quot;and&quot;) {</span>
+<span class="lineNum">     589 </span><span class="lineCov">         18 :                         Boolean result = true; </span>
+<span class="lineNum">     590 </span><span class="lineCov">         18 :                         Boolean currVal = true; </span>
+<span class="lineNum">     591 </span><span class="lineCov">         39 :                         for (int i = 0; i &lt; toCompute.tail.size(); i++) {</span>
+<span class="lineNum">     592 </span><span class="lineCov">         33 :                                 if (toCompute.tail.at(i).head.type == SymbolType) {</span>
+<span class="lineNum">     593 </span><span class="lineCov">          6 :                                         currVal = getBoolVal(toCompute.tail.at(i)); </span>
+<span class="lineNum">     594 </span>            :                                 }
+<span class="lineNum">     595 </span><span class="lineCov">         27 :                                 else if (toCompute.tail.at(i).head.type == BooleanType) {</span>
+<span class="lineNum">     596 </span><span class="lineCov">         27 :                                         currVal = toCompute.tail.at(i).head.value.bool_value; </span>
+<span class="lineNum">     597 </span>            :                                 }
+<span class="lineNum">     598 </span>            :                                 else {
+<span class="lineNum">     599 </span>            :                                         //throw an error? 
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :                                         currVal = false; </span>
+<span class="lineNum">     601 </span>            :                                 }
+<span class="lineNum">     602 </span><span class="lineCov">         33 :                                 if (!currVal) {</span>
+<span class="lineNum">     603 </span><span class="lineCov">         12 :                                         result = false; </span>
+<span class="lineNum">     604 </span><span class="lineCov">         12 :                                         break; </span>
+<span class="lineNum">     605 </span>            :                                 }
+<span class="lineNum">     606 </span>            :                         }
+<span class="lineNum">     607 </span><span class="lineCov">         18 :                         toReturn.head.type = BooleanType; </span>
+<span class="lineNum">     608 </span><span class="lineCov">         18 :                         toReturn.head.value.bool_value = result; </span>
+<span class="lineNum">     609 </span>            :                 }
+<span class="lineNum">     610 </span>            :                 //or operation 
+<span class="lineNum">     611 </span><span class="lineCov">        159 :                 else if (op == &quot;or&quot;) {</span>
+<span class="lineNum">     612 </span><span class="lineCov">         15 :                         Boolean result = false; </span>
+<span class="lineNum">     613 </span><span class="lineCov">         24 :                         for (int i = 0; i &lt; toCompute.tail.size(); i++) {</span>
+<span class="lineNum">     614 </span><span class="lineCov">         21 :                                 if (toCompute.tail.at(i).head.value.bool_value) {</span>
+<span class="lineNum">     615 </span><span class="lineCov">         12 :                                         result = true; </span>
+<span class="lineNum">     616 </span><span class="lineCov">         12 :                                         break; </span>
+<span class="lineNum">     617 </span>            :                                 }
+<span class="lineNum">     618 </span>            :                         }
+<span class="lineNum">     619 </span><span class="lineCov">         15 :                         toReturn.head.type = BooleanType; </span>
+<span class="lineNum">     620 </span><span class="lineCov">         15 :                         toReturn.head.value.bool_value = result; </span>
+<span class="lineNum">     621 </span>            :                 }
+<span class="lineNum">     622 </span>            :                 
+<span class="lineNum">     623 </span>            :                 //+ operation 
+<span class="lineNum">     624 </span><span class="lineCov">        144 :                 else if (op == &quot;+&quot;) {</span>
+<span class="lineNum">     625 </span><span class="lineCov">         39 :                         Number sum = 0; </span>
+<span class="lineNum">     626 </span><span class="lineCov">        147 :                         for (int i = 0; i &lt; toCompute.tail.size(); i++) {</span>
+<span class="lineNum">     627 </span>            :                                 //get type of values, convert / find stuff (if symbol) if necessary
+<span class="lineNum">     628 </span><span class="lineCov">        108 :                                 curr = toCompute.tail.at(i);</span>
+<span class="lineNum">     629 </span><span class="lineCov">        108 :                                 if (curr.head.type == SymbolType) {</span>
+<span class="lineNum">     630 </span>            :                                         //if not properly saved, would need a catch mechanism. 
+<span class="lineNum">     631 </span><span class="lineCov">          6 :                                         sum += getNumVal(curr); </span>
+<span class="lineNum">     632 </span>            :                                 }
+<span class="lineNum">     633 </span><span class="lineCov">        102 :                                 else if (curr.head.type == NumberType) {</span>
+<span class="lineNum">     634 </span><span class="lineCov">        102 :                                         sum += curr.head.value.num_value; </span>
+<span class="lineNum">     635 </span>            :                                 }
+<span class="lineNum">     636 </span>            :                                 else {
+<span class="lineNum">     637 </span>            :                                         //idk how this would work. probs caught by parse 
+<span class="lineNum">     638 </span>            :                                 }
+<span class="lineNum">     639 </span>            :                         }
+<span class="lineNum">     640 </span>            :                         //store computation 
+<span class="lineNum">     641 </span><span class="lineCov">         39 :                         toReturn.head.type = NumberType; </span>
+<span class="lineNum">     642 </span><span class="lineCov">         39 :                         toReturn.head.value.num_value = sum; </span>
+<span class="lineNum">     643 </span>            :                 }
+<span class="lineNum">     644 </span>            :                 //- operation 
+<span class="lineNum">     645 </span><span class="lineCov">        105 :                 else if (op == &quot;-&quot;) {</span>
+<span class="lineNum">     646 </span><span class="lineCov">         15 :                         if (toCompute.tail.size() == 1) {</span>
+<span class="lineNum">     647 </span><span class="lineCov">         12 :                                 Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     648 </span><span class="lineCov">          6 :                                 toReturn.head.type = NumberType; </span>
+<span class="lineNum">     649 </span><span class="lineCov">          6 :                                 toReturn.head.value.num_value = (val1.head.value.num_value) * -1; </span>
+<span class="lineNum">     650 </span>            :                         }
+<span class="lineNum">     651 </span>            :                         else {
+<span class="lineNum">     652 </span><span class="lineCov">         18 :                                 Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     653 </span><span class="lineCov">         18 :                                 Expression val2 = toCompute.tail.at(1);</span>
+<span class="lineNum">     654 </span>            :                                 //check if either is a symbol that needs to be converted. 
+<span class="lineNum">     655 </span><span class="lineCov">          9 :                                 if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :                                         getNumVal(val1);</span>
+<span class="lineNum">     657 </span>            :                                 }
+<span class="lineNum">     658 </span><span class="lineCov">          9 :                                 if (val2.head.type == SymbolType) {</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :                                         getNumVal(val2);</span>
+<span class="lineNum">     660 </span>            :                                 }
+<span class="lineNum">     661 </span>            :                                 //preform operation
+<span class="lineNum">     662 </span><span class="lineCov">          9 :                                 toReturn.head.type = NumberType;</span>
+<span class="lineNum">     663 </span><span class="lineCov">         18 :                                 toReturn.head.value.num_value = val1.head.value.num_value</span>
+<span class="lineNum">     664 </span><span class="lineCov">          9 :                                         - val2.head.value.num_value;</span>
+<span class="lineNum">     665 </span>            :                         }
+<span class="lineNum">     666 </span>            :                 }
+<span class="lineNum">     667 </span>            :                 //* operation
+<span class="lineNum">     668 </span><span class="lineCov">         90 :                 else if (op == &quot;*&quot;) {</span>
+<span class="lineNum">     669 </span><span class="lineCov">          6 :                         Number product = 1;</span>
+<span class="lineNum">     670 </span><span class="lineCov">         21 :                         for (int i = 0; i &lt; toCompute.tail.size(); i++) {</span>
+<span class="lineNum">     671 </span>            :                                 //get type of values, convert / find stuff (if symbol) if necessary
+<span class="lineNum">     672 </span><span class="lineCov">         15 :                                 curr = toCompute.tail.at(i);</span>
+<span class="lineNum">     673 </span><span class="lineCov">         15 :                                 if (curr.head.type == SymbolType) {</span>
+<span class="lineNum">     674 </span>            :                                         //if not properly saved, would need a catch mechanism. 
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :                                         product *= getNumVal(curr);</span>
+<span class="lineNum">     676 </span>            :                                 }
+<span class="lineNum">     677 </span><span class="lineCov">         15 :                                 else if (curr.head.type == NumberType) {</span>
+<span class="lineNum">     678 </span><span class="lineCov">         15 :                                         product *= curr.head.value.num_value;</span>
+<span class="lineNum">     679 </span>            :                                 }
+<span class="lineNum">     680 </span>            :                                 else {
+<span class="lineNum">     681 </span>            :                                         //idk how this would work. probably caught by parse
+<span class="lineNum">     682 </span>            :                                 }
+<span class="lineNum">     683 </span>            :                                 // preform operation 
+<span class="lineNum">     684 </span>            :                         }
+<span class="lineNum">     685 </span>            :                         //store computation 
+<span class="lineNum">     686 </span><span class="lineCov">          6 :                         toReturn.head.type = NumberType; </span>
+<span class="lineNum">     687 </span><span class="lineCov">          6 :                         toReturn.head.value.num_value = product; </span>
+<span class="lineNum">     688 </span>            :                 }
+<span class="lineNum">     689 </span>            :                 
+<span class="lineNum">     690 </span>            :                 //log10 operation 
+<span class="lineNum">     691 </span><span class="lineCov">         84 :                 else if (op == &quot;log10&quot;) {</span>
+<span class="lineNum">     692 </span><span class="lineCov">         24 :                         Expression val1 = toCompute.tail.at(0);</span>
+<span class="lineNum">     693 </span>            :                         //check if is a symbol that needs to be converted. 
+<span class="lineNum">     694 </span><span class="lineCov">         12 :                         if (val1.head.type == SymbolType) {</span>
+<span class="lineNum">     695 </span><span class="lineCov">          3 :                                 getNumVal(val1);</span>
+<span class="lineNum">     696 </span>            :                         }
+<span class="lineNum">     697 </span>            :                         //preform operation
+<span class="lineNum">     698 </span><span class="lineCov">          9 :                         toReturn.head.type = NumberType; </span>
+<span class="lineNum">     699 </span><span class="lineCov">          9 :                         toReturn.head.value.num_value = std::log10(val1.head.value.num_value); </span>
+<span class="lineNum">     700 </span>            :                 }
+<span class="lineNum">     701 </span>            :                 //may need to add a throw here - any invalid operations should be caught by parse tho. 
+<span class="lineNum">     702 </span><span class="lineCov">        180 :                 return toReturn; </span>
+<span class="lineNum">     703 </span>            :         }
+<span class="lineNum">     704 </span>            :         //is special op
+<span class="lineNum">     705 </span>            : 
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :         return computeSpecial(toCompute); </span>
+<span class="lineNum">     707 </span>            : 
+<span class="lineNum">     708 </span>            : }
+<span class="lineNum">     709 </span>            :         
+<span class="lineNum">     710 </span>            : 
+<span class="lineNum">     711 </span>            : /**
+<span class="lineNum">     712 </span>            : * helper function that determines if the tails of a vector 
+<a name="713"><span class="lineNum">     713 </span>            : * have all be evaluated</a>
+<span class="lineNum">     714 </span>            : */
+<span class="lineNum">     715 </span><span class="lineCov">        192 : bool atEndOfTree(std::vector&lt;Expression&gt; toCheck) {</span>
+<span class="lineNum">     716 </span><span class="lineCov">        582 :         for (int i = 0; i &lt; toCheck.size(); i++) {</span>
+<span class="lineNum">     717 </span><span class="lineCov">        396 :                 if (!toCheck.at(i).tail.empty()) {</span>
+<span class="lineNum">     718 </span><span class="lineCov">          6 :                         return false; </span>
+<span class="lineNum">     719 </span>            :                 }
+<span class="lineNum">     720 </span>            :         }
+<span class="lineNum">     721 </span><span class="lineCov">        186 :         return true; </span>
+<span class="lineNum">     722 </span>            : }
+<span class="lineNum">     723 </span>            : 
+<span class="lineNum">     724 </span>            : /**
+<span class="lineNum">     725 </span>            : * Recursive evaluation, climb down tree as needed
+<a name="726"><span class="lineNum">     726 </span>            : * to preform stored operations </a>
+<span class="lineNum">     727 </span>            : */
+<span class="lineNum">     728 </span><span class="lineCov">        351 : Expression evalRecursive(Expression &amp;curr) {</span>
+<span class="lineNum">     729 </span><span class="lineCov">        351 :         if (curr.tail.empty()) {</span>
+<span class="lineNum">     730 </span><span class="lineCov">         81 :                 if (curr.head.type == SymbolType) {</span>
+<span class="lineNum">     731 </span>            :                         //Number num = getNumVal(curr); 
+<span class="lineNum">     732 </span>            :                         //Expression newBoi = new Expression(); 
+<span class="lineNum">     733 </span>            :                         //newBoi.head.type = NumberType; 
+<span class="lineNum">     734 </span>            :                         //newBoi.head.value.num_value = num; 
+<span class="lineNum">     735 </span><span class="lineCov">         15 :                         return getVal(curr); </span>
+<span class="lineNum">     736 </span>            :                 }
+<span class="lineNum">     737 </span><span class="lineCov">         66 :                 return curr; </span>
+<span class="lineNum">     738 </span>            :         }
+<span class="lineNum">     739 </span>            :         //check if it's a special op: 
+<span class="lineNum">     740 </span>            :         //mem leak issue around here?
+<span class="lineNum">     741 </span><span class="lineCov">        270 :         if (isSpecialForm(curr.head.value.sym_value)) {</span>
+<span class="lineNum">     742 </span><span class="lineCov">         81 :                 return computeSpecial(curr);</span>
+<span class="lineNum">     743 </span>            :         }
+<span class="lineNum">     744 </span>            :         //if tail tails aren't empty, recursively solve all of them
+<span class="lineNum">     745 </span><span class="lineCov">        192 :         if (!atEndOfTree(curr.tail)) {</span>
+<span class="lineNum">     746 </span>            : 
+<span class="lineNum">     747 </span><span class="lineCov">         18 :                 for (int i = 0; i &lt; curr.tail.size(); i++) {</span>
+<span class="lineNum">     748 </span><span class="lineCov">         12 :                         curr.tail.at(i) = evalRecursive(curr.tail.at(i)); </span>
+<span class="lineNum">     749 </span>            :                 }
+<span class="lineNum">     750 </span>            :         }
+<span class="lineNum">     751 </span>            :         // compute the operation 
+<span class="lineNum">     752 </span><span class="lineCov">        192 :         return compute(curr); </span>
+<span class="lineNum">     753 </span>            : }
+<span class="lineNum">     754 </span>            : 
+<span class="lineNum">     755 </span>            : 
+<span class="lineNum">     756 </span>            : /**
+<a name="757"><span class="lineNum">     757 </span>            : * utilizes the functions above to compute the final result </a>
+<span class="lineNum">     758 </span>            : */
+<span class="lineNum">     759 </span><span class="lineCov">        231 : Expression Interpreter::eval(){</span>
+<span class="lineNum">     760 </span>            :   // TODO: implement this function
+<span class="lineNum">     761 </span><span class="lineCov">        231 :         if (ast.head.type == NoneType &amp;&amp; !isSpecialForm(ast.head.value.sym_value)) {</span>
+<span class="lineNum">     762 </span><span class="lineCov">         24 :                 std::cout &lt;&lt; &quot;Error: unknown symbol&quot; &lt;&lt; std::endl;</span>
+<span class="lineNum">     763 </span><span class="lineCov">         24 :                 throw InterpreterSemanticError(&quot;no such procedure&quot;);</span>
+<span class="lineNum">     764 </span>            :         }
+<span class="lineNum">     765 </span>            : 
+<span class="lineNum">     766 </span>            :         //if it is only a small boi
+<span class="lineNum">     767 </span><span class="lineCov">        207 :         if (this-&gt;ast.tail.empty()) {</span>
+<span class="lineNum">     768 </span>            :         
+<span class="lineNum">     769 </span><span class="lineCov">         27 :                 return this-&gt;ast; </span>
+<span class="lineNum">     770 </span>            :         }
+<span class="lineNum">     771 </span>            : 
+<span class="lineNum">     772 </span>            :         
+<span class="lineNum">     773 </span><span class="lineCov">        180 :         return evalRecursive(this-&gt;ast); </span>
+<span class="lineNum">     774 </span>            :         
+<span class="lineNum">     775 </span>            :         //what to do about division by zero?
+<span class="lineNum">     776 </span>            : }
+<span class="lineNum">     777 </span>            : 
+<span class="lineNum">     778 </span>            : /**
+<a name="779"><span class="lineNum">     779 </span>            : * simple get method to allow user to gain access to the AST without modifying it</a>
+<span class="lineNum">     780 </span>            : */
+<span class="lineNum">     781 </span><span class="lineCov">         57 : Expression Interpreter::getAst(){</span>
+<span class="lineNum">     782 </span><span class="lineCov">         57 :         return this-&gt;ast;</span>
+<span class="lineNum">     783 </span>            : }
+<span class="lineNum">     784 </span>            : 
+<span class="lineNum">     785 </span>            : /**
+<span class="lineNum">     786 </span>            : * Lets user append addtional expressions to an AST providing the head is a begin 
+<a name="787"><span class="lineNum">     787 </span>            : * statement. </a>
+<span class="lineNum">     788 </span>            : */
+<span class="lineNum">     789 </span><span class="lineCov">          9 : Expression Interpreter::appendToAst(Expression toAppend){</span>
+<span class="lineNum">     790 </span>            :         //check if it is possible to append toAppend to the tree
+<span class="lineNum">     791 </span>            : 
+<span class="lineNum">     792 </span><span class="lineCov">         18 :         if (this-&gt;ast.head.type == NoneType </span>
+<span class="lineNum">     793 </span><span class="lineCov">          6 :                 &amp;&amp; this-&gt;ast.head.value.sym_value == &quot;begin&quot;</span>
+<span class="lineNum">     794 </span><span class="lineCov">         18 :                 &amp;&amp; !(toAppend.head.value.sym_value == &quot;begin&quot; </span>
+<span class="lineNum">     795 </span><span class="lineCov">          3 :                         &amp;&amp; toAppend.head.type == NoneType)) {</span>
+<span class="lineNum">     796 </span>            : 
+<span class="lineNum">     797 </span><span class="lineCov">          3 :                 this-&gt;ast.tail.push_back(toAppend); </span>
+<span class="lineNum">     798 </span>            :         }
+<span class="lineNum">     799 </span><span class="lineCov">          9 :         return this-&gt;ast;</span>
+<span class="lineNum">     800 </span>            : }
+<span class="lineNum">     801 </span>            : 
+<span class="lineNum">     802 </span>            : /**
+<span class="lineNum">     803 </span>            : * Allows user to clear the ast if there is an error during construction 
+<a name="804"><span class="lineNum">     804 </span>            : * or parsing. simply re-initializes everything </a>
+<span class="lineNum">     805 </span>            : */
+<span class="lineNum">     806 </span><span class="lineCov">          3 : void Interpreter::clearAst(){</span>
+<span class="lineNum">     807 </span><span class="lineCov">          3 :         this-&gt;ast.head.type = NoneType; </span>
+<span class="lineNum">     808 </span><span class="lineCov">          3 :         this-&gt;ast.tail.clear(); </span>
+<span class="lineNum">     809 </span><span class="lineCov">          3 : }</span>
+<span class="lineNum">     810 </span>            : 
+<span class="lineNum">     811 </span>            : /**
+<a name="812"><span class="lineNum">     812 </span>            : * lets us update the AST to some other value </a>
+<span class="lineNum">     813 </span>            : */
+<span class="lineNum">     814 </span><span class="lineCov">          3 : Expression Interpreter::setAst(Expression toSet)</span>
+<span class="lineNum">     815 </span>            : {
+<span class="lineNum">     816 </span><span class="lineCov">          3 :         this-&gt;ast.head = toSet.head; </span>
+<span class="lineNum">     817 </span><span class="lineCov">          3 :         this-&gt;ast.tail = toSet.tail; </span>
+<a name="818"><span class="lineNum">     818 </span>            : </a>
+<span class="lineNum">     819 </span><span class="lineCov">          3 :         return this-&gt;ast;</span>
+<span class="lineNum">     820 </span><span class="lineCov">          9 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

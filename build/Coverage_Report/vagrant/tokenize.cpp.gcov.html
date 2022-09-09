@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - Coverage.combined.cleaned - /vagrant/tokenize.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">vagrant</a> - tokenize.cpp<span style="font-size: 80%;"> (source / <a href="tokenize.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">Coverage.combined.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntry">40</td>
+            <td class="headerCovTableEntryHi">92.5 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-03-18 18:46:16</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;tokenize.hpp&quot;</a>
+<span class="lineNum">       2 </span>            : #include &lt;cctype&gt;
+<span class="lineNum">       3 </span>            : 
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;iostream&gt;</a>
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span><span class="lineCov">       1461 : TokenSequenceType tokenize(std::istream &amp; seq){</span>
+<span class="lineNum">       7 </span><span class="lineCov">       1461 :   TokenSequenceType tokens;</span>
+<span class="lineNum">       8 </span><span class="lineCov">       2922 :   std::string currToken; </span>
+<span class="lineNum">       9 </span>            : 
+<span class="lineNum">      10 </span>            :  //for contents of seq (i.e. input)
+<span class="lineNum">      11 </span><span class="lineCov">      12897 :   while (seq &gt;&gt; currToken) {</span>
+<span class="lineNum">      12 </span>            :           //check if comment (i.e. has a ;) - add to tokens up until ; then skip to next line
+<span class="lineNum">      13 </span><span class="lineCov">       5718 :           int findSemi = currToken.find(';'); </span>
+<span class="lineNum">      14 </span><span class="lineCov">       5718 :           if ( findSemi != -1) {</span>
+<span class="lineNum">      15 </span><span class="lineCov">        351 :                   if (findSemi &gt; 0) {</span>
+<span class="lineNum">      16 </span><span class="lineNoCov">          0 :                           tokens.push_back(currToken.substr(0, findSemi)); </span>
+<span class="lineNum">      17 </span>            :                   }
+<span class="lineNum">      18 </span>            :                   char temp[256]; 
+<span class="lineNum">      19 </span><span class="lineCov">        351 :                   seq.getline(temp, 256);  //skip to next line of input</span>
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            :                   
+<span class="lineNum">      22 </span>            :           }
+<span class="lineNum">      23 </span>            :           //check if character is OPEN token and save accordingly
+<span class="lineNum">      24 </span><span class="lineCov">       5367 :           else if (currToken[0] == OPEN) {</span>
+<span class="lineNum">      25 </span>            :                   //check for and add all OPEN tokens
+<span class="lineNum">      26 </span><span class="lineCov">       2114 :                   int index = 0;</span>
+<span class="lineNum">      27 </span><span class="lineCov">       6342 :                   while (index &lt; currToken.size() &amp;&amp; currToken[index] == OPEN) {</span>
+<span class="lineNum">      28 </span><span class="lineCov">       2114 :                           tokens.push_back(&quot;(&quot;); </span>
+<span class="lineNum">      29 </span><span class="lineCov">       2114 :                           index++; </span>
+<span class="lineNum">      30 </span>            :                   }
+<span class="lineNum">      31 </span>            :                   //if space-delimited string exits after OPEN token add it 
+<span class="lineNum">      32 </span><span class="lineCov">       2114 :                   if (index &lt; currToken.size()) {</span>
+<span class="lineNum">      33 </span><span class="lineCov">       2063 :                           int start = index; </span>
+<span class="lineNum">      34 </span>            :                           //additional check for extra CLOSED Characters 
+<span class="lineNum">      35 </span><span class="lineCov">      14059 :                           while (index &lt; currToken.size() &amp;&amp; currToken[index] != CLOSE)</span>
+<span class="lineNum">      36 </span>            :                           {
+<span class="lineNum">      37 </span><span class="lineCov">       5998 :                                   index++; </span>
+<span class="lineNum">      38 </span>            :                           }
+<span class="lineNum">      39 </span><span class="lineCov">       2063 :                           tokens.push_back(currToken.substr(start, index - 1));</span>
+<span class="lineNum">      40 </span><span class="lineCov">       2887 :                           while (index &lt; currToken.size()) {</span>
+<span class="lineNum">      41 </span><span class="lineCov">        412 :                                   tokens.push_back(&quot;)&quot;); </span>
+<span class="lineNum">      42 </span><span class="lineCov">        412 :                                   index++;</span>
+<span class="lineNum">      43 </span>            :                           }
+<span class="lineNum">      44 </span>            :                   }
+<span class="lineNum">      45 </span>            :                   
+<span class="lineNum">      46 </span>            :           }
+<span class="lineNum">      47 </span>            :           //check if character is CLOSE token and save accordingly
+<span class="lineNum">      48 </span><span class="lineCov">       3253 :           else if (currToken[currToken.size() - 1] == CLOSE) {</span>
+<span class="lineNum">      49 </span><span class="lineCov">       1441 :                   int index = currToken.size() - 1; </span>
+<span class="lineNum">      50 </span><span class="lineCov">       1441 :                   int closeCount = 0; </span>
+<span class="lineNum">      51 </span>            :                   //find index of delimited string token (if it exits) and number of CLOSE tokens
+<span class="lineNum">      52 </span><span class="lineCov">       4745 :                   while (index &gt;= 0 &amp;&amp; currToken[index] == CLOSE) {</span>
+<span class="lineNum">      53 </span><span class="lineCov">       1652 :                           closeCount++; </span>
+<span class="lineNum">      54 </span><span class="lineCov">       1652 :                           index--; </span>
+<span class="lineNum">      55 </span>            :                   }
+<span class="lineNum">      56 </span>            :                   //if it exists, add delimted string token 
+<span class="lineNum">      57 </span><span class="lineCov">       1441 :                   if (index &gt;= 0) {</span>
+<span class="lineNum">      58 </span><span class="lineCov">       1363 :                           int openCheck = 0;</span>
+<span class="lineNum">      59 </span>            :                           //additional check for extra OPEN Characters
+<span class="lineNum">      60 </span><span class="lineCov">       1363 :                           while (currToken[openCheck] == OPEN) {</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :                                   openCheck++; </span>
+<span class="lineNum">      62 </span>            :                           }
+<span class="lineNum">      63 </span><span class="lineCov">       1363 :                           for (int i = 0; i &lt; openCheck; i++) {</span>
+<span class="lineNum">      64 </span><span class="lineNoCov">          0 :                                   tokens.push_back(&quot;(&quot;); </span>
+<span class="lineNum">      65 </span>            :                           }
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span><span class="lineCov">       1363 :                           tokens.push_back(currToken.substr(openCheck, index + 1));</span>
+<span class="lineNum">      68 </span>            :                           
+<span class="lineNum">      69 </span>            :                   } 
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span>            :                   //for the closeCount add CLOSE token
+<span class="lineNum">      72 </span><span class="lineCov">       3093 :                   for (int i = 0; i &lt; closeCount; i++) {</span>
+<span class="lineNum">      73 </span><span class="lineCov">       1652 :                           tokens.push_back(&quot;)&quot;); </span>
+<span class="lineNum">      74 </span>            :                   }
+<span class="lineNum">      75 </span>            :                   
+<span class="lineNum">      76 </span>            :           }
+<span class="lineNum">      77 </span>            :           //Base case save of token
+<span class="lineNum">      78 </span>            :           else {
+<span class="lineNum">      79 </span><span class="lineCov">       1812 :                   tokens.push_back(currToken); </span>
+<span class="lineNum">      80 </span>            :           }
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            :   }
+<a name="83"><span class="lineNum">      83 </span>            :   //return finalized sequence of tokens </a>
+<span class="lineNum">      84 </span><span class="lineCov">       2922 :   return tokens;</span>
+<span class="lineNum">      85 </span><span class="lineCov">         39 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

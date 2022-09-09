@@ -1,0 +1,69 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SLISP",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "slisp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-slisp-Debug-c010d239e4cd7798391c.json",
+					"name" : "slisp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "unittests::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-unittests-Debug-93bbb5aeff7940d2fec9.json",
+					"name" : "unittests",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47/out/build/x64-Debug",
+		"source" : "C:/Users/iroch/OneDrive/Desktop/School_Stuff/Old_Semesters/Spring_2022/ECE 3574/ECE 3574/proj2_ece3574/ece3574-sp22-proj2-illar47"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

@@ -1,0 +1,242 @@
+diff --git a/main_window.cpp b/main_window.cpp
+index dc6a2c5..770f521 100644
+--- a/main_window.cpp
++++ b/main_window.cpp
+@@ -11,6 +11,9 @@
+ 
+ //myIncludes
+ #include "qt_interpreter.hpp"
++#include <string>
++#include <sstream>
++#include <fstream>
+ /**
+ * default constructor
+ */
+@@ -72,4 +75,28 @@ MainWindow::MainWindow(std::string filename, QWidget * parent): QWidget(parent){
+ 	layout->addWidget(msg);
+ 
+ 	this->setLayout(layout);
++
++	//file stuffs 
++	//check if valid filename given 
++
++	//char currInput[256];
++
++	//bool terminateProgram = false; 
++	//std::ifstream ifs(filename); //should it check for the .slp???
++	/*if (ifs) {
++		while (!ifs.eof()) {
++			ifs.getline(currInput, 256);
++
++			interp->parseAndEvaluate(currInput);
++
++		}
++	}*/
++	//interp->parseAndEvaluate(QString::fromStdString(filename)); 
++	//else {
++		//std::cout << "Error: invalid filename" << std::endl;
++
++		//add error boi? 
++	//}
++
++	
+ }
+diff --git a/qt_interpreter.cpp b/qt_interpreter.cpp
+index e56b86a..b6fe750 100644
+--- a/qt_interpreter.cpp
++++ b/qt_interpreter.cpp
+@@ -23,86 +23,86 @@ QtInterpreter::QtInterpreter(QObject * parent): QObject(parent){
+ void QtInterpreter::parseAndEvaluate(QString entry){
+   // TODO: your code here...
+ 	std::string program = entry.toStdString(); 
+-	std::istringstream iss(program);
+-	QString msg; 
+-	bool ok = interp.parse(iss);
+-	if (!ok) {
+-		//std::cerr << "parsing error when calling:  " << program << std::endl;
+-		//update error - emmit
+-	    msg = QString::fromStdString("Error: parsing failure"); 
+-		emit error(msg); 
++	std::ifstream iss(program);
++	QString msg;
++	if (!iss) {
++		msg = QString::fromStdString("Error: invalid file or line given");
++		emit error(msg);
+ 	}
+ 	else {
+-		Expression result;
+-		try {
+-			result = interp.eval();
+-			//check for graphic stuffs
+-			
+-			//issue with the type not being NoneType
+-			 
+-			if (result.head.type == NoneType && result.head.value.sym_value == "draw") {
+-				
+-				//create graphics for each item in tail 
+-				for (int i = 0; i < result.tail.size(); i++) {
+-					
+-					Expression curr = result.tail[i]; 
+-					if (curr.head.type == PointType) {
+-
+-						Point currPoint = curr.head.value.point_value; 
+-						QGraphicsEllipseItem* pnt = new QGraphicsEllipseItem(currPoint.x, currPoint.y, 1, 1); 
+-						//pnt->setRect(currPoint.x, currPoint.y, 0, 0); 
+-
+-						emit drawGraphic(pnt); 
+-						
+-						
+-					}
+-					else if (curr.head.type == LineType) {
+-						Line currLine = curr.head.value.line_value; 
+-						QGraphicsLineItem* line = new QGraphicsLineItem(currLine.first.x, currLine.first.y, currLine.second.x, currLine.second.y); 
+-						//Line currLine = curr.head.value.line_value; 
+-						emit drawGraphic(line); 
+-					}
+-					else if (curr.head.type == ArcType) {
+-
+-						
+-						Arc currArc = curr.head.value.arc_value; 
+-						//currArc.start.x, currArc.start.y, currArc.center.x, currArc.center.y
+-						double bigD = std::sqrt(std::pow((currArc.start.x - currArc.center.x), 2) + std::pow((currArc.start.y - currArc.center.y), 2)); 
+-						qreal xVal = currArc.center.x - bigD; 
+-						qreal yVal = currArc.center.y - bigD; 
+-						qreal theRealBigD = bigD * 2; 
+-						QGraphicsArcItem* arc = new QGraphicsArcItem(xVal, yVal, theRealBigD, theRealBigD);
+-						double calculatingTheBitch = currArc.span * (180 / atan2(0, -1) )* 16; 
+-						arc->setSpanAngle(calculatingTheBitch); //I wannnnaaaaaaaa dieeeeeee -_-
+-						emit drawGraphic(arc); 
++		
++		bool ok = interp.parse(iss);
++		if (!ok) {
++			//std::cerr << "parsing error when calling:  " << program << std::endl;
++			//update error - emmit
++			msg = QString::fromStdString("Error: parsing failure");
++			emit error(msg);
++		}
++		else {
++			Expression result;
++			try {
++				result = interp.eval();
++				//check for graphic stuffs
++
++				//issue with the type not being NoneType
++
++				if (result.head.type == NoneType && result.head.value.sym_value == "draw") {
++
++					//create graphics for each item in tail 
++					for (int i = 0; i < result.tail.size(); i++) {
++
++						Expression curr = result.tail[i];
++						if (curr.head.type == PointType) {
++
++							Point currPoint = curr.head.value.point_value;
++							QGraphicsEllipseItem* pnt = new QGraphicsEllipseItem(currPoint.x, currPoint.y, 1, 1);
++							//pnt->setRect(currPoint.x, currPoint.y, 0, 0); 
++
++							emit drawGraphic(pnt);
+ 
+-					}
+-					//else error
+ 
+-					
++						}
++						else if (curr.head.type == LineType) {
++							Line currLine = curr.head.value.line_value;
++							QGraphicsLineItem* line = new QGraphicsLineItem(currLine.first.x, currLine.first.y, currLine.second.x, currLine.second.y);
++							//Line currLine = curr.head.value.line_value; 
++							emit drawGraphic(line);
++						}
++						else if (curr.head.type == ArcType) {
++
++
++							Arc currArc = curr.head.value.arc_value;
++							//currArc.start.x, currArc.start.y, currArc.center.x, currArc.center.y
++							double bigD = std::sqrt(std::pow((currArc.start.x - currArc.center.x), 2) + std::pow((currArc.start.y - currArc.center.y), 2));
++							qreal xVal = currArc.center.x - bigD;
++							qreal yVal = currArc.center.y - bigD;
++							qreal theRealBigD = bigD * 2;
++							QGraphicsArcItem* arc = new QGraphicsArcItem(xVal, yVal, theRealBigD, theRealBigD);
++							double calculatingTheBitch = currArc.span * (180 / atan2(0, -1)) * 16;
++							arc->setSpanAngle(calculatingTheBitch); //I wannnnaaaaaaaa dieeeeeee -_-
++							emit drawGraphic(arc);
++
++						}
++						//else error
++
++					}
++				}
++				else {
++					std::string toPrint = result.printExpression(result);
++					msg = QString::fromStdString(toPrint);
++					emit info(msg);
+ 				}
+-				
+ 			}
+-			else {
+-				std::string toPrint = result.printExpression(result);
+-				msg = QString::fromStdString(toPrint);
+-				emit info(msg);
++			catch (InterpreterSemanticError) {
++				msg = QString::fromStdString("Error: evaluation failure");
++				emit error(msg);
+ 			}
+-			
+-			
+-			
+-			
+ 		}
+-		catch (InterpreterSemanticError) {
+-			msg = QString::fromStdString("Error: evaluation failure");
+-			emit error(msg);
+-		}
+-
+-		
+ 	}
+ 	
+ 	
+ 	
++	
+ 	//check if empty / if error thrown. 
+ 	//update info- potentially draw a graphic - emmit
+ }
+\ No newline at end of file
+diff --git a/sldraw.cpp b/sldraw.cpp
+index f2fae47..6b0dc10 100644
+--- a/sldraw.cpp
++++ b/sldraw.cpp
+@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
+ 
+   if(argc == 2){
+     filename = argv[1];
++    //add stuff to execute file
++
+   }
+   if(argc > 2){
+     std::cerr << "Error: invalid number of arguments to sldraw" << std::endl;
+diff --git a/unittests.cpp b/unittests.cpp
+index 915dbca..80d741a 100644
+--- a/unittests.cpp
++++ b/unittests.cpp
+@@ -336,4 +336,18 @@ TEST_CASE("invalid appends for appendToAst() method", "[interpreter]") {
+ 
+ }
+ 
+-//slip tests ? 
+\ No newline at end of file
++//tests for sin, cos, tan (if any missing) 
++
++//test printing of draw thing 
++
++//test draw parsing 
++
++//test draw evaluation (its a new special boi) 
++
++//test with graphic types invalid
++
++//need to check how well it handles a file (similar to last time)
++
++//slip tests 
++
++//make sure slip works with points now 
+\ No newline at end of file
